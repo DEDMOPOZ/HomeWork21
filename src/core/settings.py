@@ -25,12 +25,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = '1-j==icr-%*x4mhn0dh--)oqgczd+p_(ni3!t^&1_gu90516y5'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
 # Celery Conf
-CELERY_BROKER_URL = 'amqp://localhost'
+CELERY_BROKER_URL = 'amqp://{0}:{1}@{2}:5672'.format(
+    os.environ.get('RABBITMQ_DEFAULT_USER', 'guest'),
+    os.environ.get('RABBITMQ_DEFAULT_PASS', 'guest'),
+    os.environ.get('RABBITMQ_DEFAULT_HOST', 'localhost'),
+)
 
 CELERY_TIME_ZONE = 'Europe/Kiev'
 CELERY_TASK_TRACK_STARTED = True
@@ -59,10 +63,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'main',
-    'account',
+    'accounts',
 ]
 
-AUTH_USER_MODEL = 'account.user'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -102,8 +105,12 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': os.environ.get('POSTGRES_USER', 'postgres'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'postgres'),
+        'HOST': os.environ.get('POSTGRES_HOST', 'postgres'),
+        'PORT': 5432,
     }
 }
 
@@ -154,5 +161,12 @@ EMAIL_HOST_PASSWORD = ''
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+
+LOGIN_REDIRECT_URL = 'home_page'
+LOGOUT_REDIRECT_URL = 'home_page'
